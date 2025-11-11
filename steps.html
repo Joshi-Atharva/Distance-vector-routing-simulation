@@ -1,4 +1,16 @@
-# dvr_sim.py
+<p class="line" data-line="0">Nice — below is a complete, copy-paste-ready Python implementation of the Distance Vector Routing simulation using threads.
+Design choices made (aligned with your notes + fixes I suggested):</p>
+<ul>
+<li>One Python thread per router (node).</li>
+<li>Per-node incoming <code>queue.Queue</code> for messages (no global counters).</li>
+<li>Each router sends its full distance vector to all <strong>adjacent</strong> neighbours each round.</li>
+<li>During the <em>receive</em> phase, a node waits until it has received exactly <code>len(neighbours)</code> messages for the current iteration (messages are tagged with <code>iteration</code> so late/old messages are ignored).</li>
+<li>After updating, every node waits at a global <code>print_barrier</code> (main thread also waits on that barrier) — main thread prints routing tables after each round and marks changed entries with <code>*</code>.</li>
+<li>Configurable <code>MAX_ITERS</code> and <code>DELAY_BETWEEN_ROUNDS</code> (keeps behavior similar to assignment where they had 2s between rounds).</li>
+<li>Uses standard <code>threading</code>, <code>queue</code>, and <code>time</code>. No external libs.</li>
+</ul>
+<p class="line" data-line="11">Copy, paste, run. If you want I can adapt it to read the topology from your <code>Lab DVR.pdf</code> format if you tell me the input format; for now I include a small example topology and sample run.</p>
+<pre><code class="language-python"># dvr_sim.py
 import threading
 import queue
 import time
@@ -12,20 +24,20 @@ INF = 10**9
 class Message:
     def __init__(self, src, vector, iteration):
         self.src = src
-        self.vector = vector  # dict: dest -> cost
+        self.vector = vector  # dict: dest -&gt; cost
         self.iteration = iteration
 
 class Node(threading.Thread):
     def __init__(self, name, neighbours, in_queues, all_nodes, print_barrier):
         super().__init__(name=str(name))
         self.name = name
-        self.neighbours = neighbours  # dict neighbour -> cost (direct link cost)
+        self.neighbours = neighbours  # dict neighbour -&gt; cost (direct link cost)
         self.in_queue = in_queues[name]
         self.in_queues = in_queues    # reference to all in_queues to send messages
         self.all_nodes = all_nodes    # list of node names (for canonical ordering)
         self.print_barrier = print_barrier
 
-        # routing table: dest -> (cost, next_hop)
+        # routing table: dest -&gt; (cost, next_hop)
         self.table = {}
         for n in all_nodes:
             if n == self.name:
@@ -41,7 +53,7 @@ class Node(threading.Thread):
         self.stop_flag = threading.Event()
 
     def send_vector(self):
-        # Build distance vector to send (dest -> cost)
+        # Build distance vector to send (dest -&gt; cost)
         vector = {dest: cost for dest, (cost, nh) in self.table.items()}
         msg = Message(self.name, vector, self.iteration)
         # Send to all adjacent neighbours (simulate link)
@@ -53,7 +65,7 @@ class Node(threading.Thread):
         needed = len(self.neighbours)
         recvd = []
         # loop until we've collected 'needed' messages for current iteration
-        while len(recvd) < needed:
+        while len(recvd) &lt; needed:
             try:
                 msg = self.in_queue.get(timeout=0.5)
             except queue.Empty:
@@ -79,7 +91,7 @@ class Node(threading.Thread):
                 # candidate cost to dest via src
                 cand = src_cost + cost_to_dest_via_src
                 old_cost, old_nh = self.table[dest]
-                if cand < old_cost:
+                if cand &lt; old_cost:
                     self.table[dest] = (cand, src)
                     changed = True
         # clear recv_buffer for next iteration
@@ -87,7 +99,7 @@ class Node(threading.Thread):
         return changed
 
     def run(self):
-        while not self.stop_flag.is_set() and self.iteration < MAX_ITERS:
+        while not self.stop_flag.is_set() and self.iteration &lt; MAX_ITERS:
             # Phase 1: send our current vector to all neighbours
             self.send_vector()
 
@@ -119,7 +131,7 @@ def pretty_table(node):
     rows = []
     for dest in sorted(node.table.keys()):
         cost, nh = node.table[dest]
-        if cost >= INF:
+        if cost &gt;= INF:
             cost_str = "INF"
             nh_str = "-"
         else:
@@ -142,7 +154,7 @@ def print_all_tables(nodes, iteration):
 
 def run_simulation(topology, max_iters=MAX_ITERS, delay_between_rounds=DELAY_BETWEEN_ROUNDS):
     """
-    topology: dict node -> dict(neighbour -> cost)
+    topology: dict node -&gt; dict(neighbour -&gt; cost)
     e.g.
     topology = {
        'A': {'B':1, 'C':5},
@@ -187,7 +199,7 @@ def run_simulation(topology, max_iters=MAX_ITERS, delay_between_rounds=DELAY_BET
         node.stop()
 
     # join threads - some nodes may be blocked waiting to receive messages for next iteration;
-    # put dummy messages with iteration tag > current iteration to unblock if necessary.
+    # put dummy messages with iteration tag &gt; current iteration to unblock if necessary.
     # We'll send terminating messages to each node's queue to avoid indefinite blocking.
     for n in nodes_list:
         # put dummy messages for neighbours count to unblock receive loops (iteration == last iter)
@@ -199,39 +211,27 @@ def run_simulation(topology, max_iters=MAX_ITERS, delay_between_rounds=DELAY_BET
 
     print("\nSimulation finished.")
 
-def read_topology(filename):
-    topology = {}
-
-    with open(filename, "r") as f:
-        lines = [line.strip() for line in f if line.strip()]
-
-    # number of nodes (not actually needed except for validation)
-    N = int(lines[0])
-
-    # list of node names
-    nodes = lines[1].split()
-
-    # initialize empty adjacency lists
-    for node in nodes:
-        topology[node] = {}
-
-    # parse link lines until EOF
-    for line in lines[2:]:
-        if line == "EOF":
-            break
-
-        u, v, cost = line.split()
-        cost = int(cost)
-
-        # since the graph is undirected, fill both directions
-        topology[u][v] = cost
-        topology[v][u] = cost
-
-    return topology
-
 # Example topology and run
 if __name__ == "__main__":
     # Example: A--1--B--2--C and A--5--C
-    topology = read_topology("input.txt")
+    topology = {
+        'A': {'B': 1, 'C': 5},
+        'B': {'A': 1, 'C': 2},
+        'C': {'A': 5, 'B': 2},
+    }
     run_simulation(topology, max_iters=6, delay_between_rounds=2)
-
+</code></pre>
+<p class="line" data-line="226">Notes &amp; possible tweaks</p>
+<ul>
+<li>If you want the main thread <strong>not</strong> to participate in the barrier, create the barrier with <code>parties = num_nodes</code> and have nodes only sync among themselves; then the main thread prints by checking a different synchronization mechanism. I included the main thread in the barrier because it’s the simplest way to ensure printing happens exactly after every node finishes updating.</li>
+<li>The code tags messages with <code>iteration</code> to avoid using stale vectors from previous rounds.</li>
+<li>If you want routers to stop early when no table changes occur (convergence), add a shared <code>converged</code> flag: nodes set a per-iteration <code>changed</code> flag, then use another global barrier &amp; a small shared boolean to see if <em>any</em> changed; if none changed, break early. I left that out because many assignments require fixed number of rounds and printing asterisks each round.</li>
+<li>To adapt to the exact input format of your <code>Lab DVR.pdf</code>, paste the format here (or let me read the file), and I’ll update <code>run_simulation</code> to parse it.</li>
+</ul>
+<p class="line" data-line="233">Want me to:</p>
+<ol>
+<li>Add early convergence detection (stop when no change)?</li>
+<li>Modify the code to read topology from a file format your lab uses (if you paste example input)?</li>
+<li>Convert this to a version using explicit <code>Condition</code> variables instead of <code>Barrier</code> (closer to your original pseudocode)?</li>
+</ol>
+<p class="line" data-line="239">Pick one and I’ll update the code accordingly.</p>

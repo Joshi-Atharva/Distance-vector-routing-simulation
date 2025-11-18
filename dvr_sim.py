@@ -4,7 +4,7 @@ import queue
 import time
 import copy
 
-MAX_ITERS = 6
+MAX_ITERS = 7          # maximum number of iterations
 DELAY_BETWEEN_ROUNDS = 2.0   # seconds between rounds (as in many lab specs)
 
 INF = 10**9
@@ -225,7 +225,7 @@ def read_topology(filename):
 
         # since the graph is undirected, fill both directions
         topology[u][v] = cost
-        topology[v][u] = cost
+        topology[v][u] = cost # debug - testing for directed links
 
     return topology
 

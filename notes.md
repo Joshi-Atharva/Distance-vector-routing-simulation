@@ -1,3 +1,7 @@
+***About final presentation***
+1. why the global synchronization barrier is used which implies a central entity controlling routers that is not present in an actualy distributed network?
+Ans: The assignment asks us to synchronize over each iteration of exchange and updation, by telling us to print the routing tables of all nodes after each update. Hence we are using the barrier else we might have done away with it and exchanged in periodic intervals of time without having to wait on the shared condition variable.
+
 ***5/11/2025 0120 hrs***
 #### pseudocode:
 ```

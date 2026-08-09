@@ -30,11 +30,6 @@ Distance Vector Routing is a dynamic routing protocol where each router maintain
 │   ├── sample_cv.py         # Demo: Python Condition Variables (`threading.Condition`)
 │   ├── sample_locks.py      # Demo: Thread synchronization locks (`threading.Lock`)
 │   └── sample_threading.py  # Demo: Basic multi-threading setup (`threading.Thread`)
-├── docs/
-│   ├── notes.md             # Theoretical overview, barrier sync notes, & pseudocode
-│   ├── notes.pdf            # PDF presentation notes
-│   ├── steps.md             # Step-by-step design decisions & algorithm walkthrough
-│   └── steps.html           # HTML export of implementation steps
 ├── .gitignore               # Comprehensive Git ignore rules
 ├── requirements.txt         # Project requirements & Python version compatibility
 └── README.md                # Project overview and documentation
@@ -82,14 +77,6 @@ The [`samples/`](./samples) directory contains standalone Python scripts demonst
 - **`samples/sample_locks.py`**: Demonstrates thread safety and shared state protection using `Lock`.
 - **`samples/sample_cv.py`**: Demonstrates Producer-Consumer synchronization using `Condition` variables.
 - **`samples/sample_threading.py`**: Demonstrates spawning and joining concurrent worker threads.
-
----
-
-## Detailed Documentation
-
-For a deep dive into the design decisions, synchronization mechanisms, and Bellman-Ford mathematical updates, refer to the [`docs/`](./docs) directory:
-- [docs/notes.md](./docs/notes.md) - Conceptual pseudocode, presentation notes, and barrier synchronization logic.
-- [docs/steps.md](./docs/steps.md) - Architectural design rationale and round-by-round state transition analysis.
 
 ---
 

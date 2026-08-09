@@ -1,2 +1,28 @@
-.venv
+# Environments
+.venv/
+venv/
+env/
+ENV/
 
+# Python Cache & Byte-code
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# personal reference docs
+docs/

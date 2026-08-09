@@ -3,6 +3,8 @@ import threading
 import queue
 import time
 import copy
+import sys
+import os
 
 MAX_ITERS = 7          # maximum number of iterations
 DELAY_BETWEEN_ROUNDS = 2.0   # seconds between rounds (as in many lab specs)
@@ -231,7 +233,21 @@ def read_topology(filename):
 
 # Example topology and run
 if __name__ == "__main__":
-    # Example: A--1--B--2--C and A--5--C
-    topology = read_topology("input.txt")
-    run_simulation(topology, max_iters=6, delay_between_rounds=2)
+    # Determine input file path from CLI argument or default locations
+    if len(sys.argv) > 1:
+        input_file = sys.argv[1]
+    else:
+        # Check standard default locations
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        default_data_file = os.path.join(base_dir, "data", "input.txt")
+        if os.path.exists(default_data_file):
+            input_file = default_data_file
+        elif os.path.exists("input.txt"):
+            input_file = "input.txt"
+        else:
+            input_file = "data/input.txt"
+
+    print(f"Loading topology from: {input_file}")
+    topology = read_topology(input_file)
+    run_simulation(topology, max_iters=6, delay_between_rounds=1.0)
 
